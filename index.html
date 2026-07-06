@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Меню недели</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Меню">
+<meta name="theme-color" content="#0f1115">
+<style>
+/* ============================================================
+   ДИЗАЙН-ПЕРЕМЕННЫЕ — меняй здесь цвета, скругления, шрифты.
+   Это главное место для экспериментов с дизайном!
+   ============================================================ */
+:root {
+  --bg: #f2f2f7;            /* фон приложения */
+  --card: #ffffff;          /* фон карточек */
+  --text: #1c1c1e;          /* основной текст */
+  --text2: #8e8e93;         /* вторичный текст */
+  --accent: #34c759;        /* акцент (зелёный iOS) */
+  --accent2: #ff9f0a;       /* второй акцент (оранжевый) */
+  --blue: #0a84ff;
+  --red: #ff453a;
+  --radius: 18px;           /* скругление карточек */
+  --tabbar-bg: rgba(255,255,255,.82);
+  --sep: rgba(60,60,67,.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115; --card: #1c1d22; --text: #f2f2f7; --text2: #98989f;
+    --tabbar-bg: rgba(22,23,28,.85); --sep: rgba(255,255,255,.09);
+  }
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  background: var(--bg); color: var(--text);
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing: antialiased;
+}
+header {
+  padding: calc(14px + env(safe-area-inset-top)) 20px 6px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+header h1 { font-size:28px; font-weight:800; letter-spacing:-.5px; }
+header .sub { font-size:13px; color:var(--text2); margin-top:2px; }
+#gear { font-size:22px; background:none; border:none; cursor:pointer; padding:8px; }
+main { padding: 8px 16px 16px; max-width:560px; margin:0 auto; }
+
+/* --- карточки дня --- */
+.day {
+  background:var(--card); border-radius:var(--radius); padding:14px 16px;
+  margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.05);
+}
+.day.today { outline:2px solid var(--accent); }
+.day-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+.day-head b { font-size:17px; }
+.day-head span { font-size:13px; color:var(--text2); }
+.meal { display:flex; gap:10px; padding:8px 0; border-top:1px solid var(--sep); align-items:flex-start; }
+.meal .slot { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; width:62px; flex-shrink:0; padding-top:2px; }
+.meal .name { font-size:15px; line-height:1.35; }
+.meal .kbju { font-size:12px; color:var(--text2); margin-top:2px; }
+.badge { display:inline-block; font-size:11px; font-weight:700; border-radius:8px; padding:2px 7px; margin-top:4px; }
+.badge.cook { background:rgba(255,159,10,.15); color:var(--accent2); }
+.badge.left { background:rgba(52,199,89,.15); color:var(--accent); }
+.note { font-size:12px; color:var(--text2); margin-top:3px; }
+
+/* --- покупки --- */
+.cat { background:var(--card); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; }
+.cat h3 { font-size:13px; font-weight:700; color:var(--text2); text-transform:uppercase; padding:12px 16px 4px; }
+.item { display:flex; align-items:center; gap:12px; padding:11px 16px; border-top:1px solid var(--sep); cursor:pointer; user-select:none; }
+.item .box {
+  width:24px; height:24px; border-radius:50%; border:2px solid var(--text2);
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  transition:all .15s; font-size:14px; color:transparent;
+}
+.item.done .box { background:var(--accent); border-color:var(--accent); color:#fff; }
+.item .n { font-size:16px; flex:1; }
+.item.done .n { color:var(--text2); text-decoration:line-through; }
+.item .q { font-size:14px; color:var(--text2); }
+.progress { font-size:14px; color:var(--text2); text-align:center; margin:4px 0 14px; }
+.progress .bar { height:6px; background:var(--sep); border-radius:3px; margin-top:8px; overflow:hidden; }
+.progress .bar i { display:block; height:100%; background:var(--accent); border-radius:3px; transition:width .3s; }
+
+/* --- КБЖУ --- */
+.kday { background:var(--card); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; }
+.kday b { font-size:16px; }
+.person { margin-top:10px; }
+.person .pname { font-size:13px; font-weight:700; margin-bottom:4px; }
+.krow { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:13px; }
+.krow .lbl { width:32px; color:var(--text2); }
+.krow .track { flex:1; height:8px; background:var(--sep); border-radius:4px; overflow:hidden; }
+.krow .track i { display:block; height:100%; border-radius:4px; }
+.krow .val { width:88px; text-align:right; color:var(--text2); font-variant-numeric:tabular-nums; }
+
+/* --- таб-бар --- */
+nav {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--tabbar-bg); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--sep);
+  display:flex; padding-bottom:env(safe-area-inset-bottom);
+}
+nav button {
+  flex:1; background:none; border:none; padding:10px 0 8px; cursor:pointer;
+  font-size:10px; font-weight:600; color:var(--text2);
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  font-family:inherit;
+}
+nav button .ic { font-size:24px; line-height:1; }
+nav button.on { color:var(--accent); }
+
+/* --- настройки / оверлеи --- */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:flex-end; z-index:10; }
+.overlay.show { display:flex; }
+.sheet {
+  background:var(--card); width:100%; border-radius:22px 22px 0 0;
+  padding:20px 20px calc(24px + env(safe-area-inset-bottom)); max-width:560px; margin:0 auto;
+}
+.sheet h2 { font-size:20px; margin-bottom:14px; }
+.sheet label { font-size:13px; color:var(--text2); display:block; margin:12px 0 4px; }
+.sheet input, .sheet textarea {
+  width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--sep);
+  background:var(--bg); color:var(--text); font-size:16px; font-family:inherit; resize:vertical;
+}
+.btn {
+  width:100%; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:700;
+  background:var(--accent); color:#fff; margin-top:18px; cursor:pointer; font-family:inherit;
+}
+.btn.ghost { background:var(--sep); color:var(--text); margin-top:10px; }
+.hint { font-size:12px; color:var(--text2); margin-top:10px; line-height:1.5; }
+.empty { text-align:center; color:var(--text2); padding:60px 20px; font-size:15px; line-height:1.6; }
+#toast {
+  position:fixed; top:calc(10px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%);
+  background:var(--text); color:var(--bg); font-size:13px; font-weight:600;
+  padding:8px 16px; border-radius:20px; opacity:0; transition:opacity .3s; z-index:20; pointer-events:none;
+}
+#toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="title">Меню</h1><div class="sub" id="subtitle"></div></div>
+  <button id="gear" onclick="openSettings()">⚙️</button>
+</header>
+<main id="view"></main>
+<nav>
+  <button id="tab-menu" onclick="setTab('menu')"><span class="ic">🍽</span>Меню</button>
+  <button id="tab-shop" onclick="setTab('shop')"><span class="ic">🛒</span>Покупки</button>
+  <button id="tab-kbju" onclick="setTab('kbju')"><span class="ic">📊</span>КБЖУ</button>
+</nav>
+
+<div class="overlay" id="settings">
+  <div class="sheet">
+    <h2>Настройки</h2>
+    <label>URL скрипта (Google Apps Script)</label>
+    <input id="s-url" placeholder="https://script.google.com/macros/s/…/exec" autocapitalize="off">
+    <label>Секретный ключ</label>
+    <input id="s-key" placeholder="ключ из Code.gs" type="password" autocapitalize="off">
+    <div class="hint">Данные хранятся в Google Drive Ильи и видны только вам двоим. URL и ключ — из инструкции в README.</div>
+    <button class="btn" onclick="saveSettings()">Сохранить</button>
+    <button class="btn ghost" onclick="refresh(true)">Обновить данные</button>
+    <label style="margin-top:20px">Импорт плана недели (JSON из чата Claude)</label>
+    <textarea id="s-plan" rows="4" placeholder='{"title":"Неделя …","days":[…]}'></textarea>
+    <button class="btn ghost" onclick="importPlan()">Загрузить план</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   ЛОГИКА. Данные (меню, КБЖУ, покупки, отметки) живут в Google
+   Drive и доступны через Google Apps Script (см. README).
+   В GitHub — только код приложения, никаких данных.
+   ============================================================ */
+const LS = localStorage;
+const cfg = () => ({ url: LS.gas_url || '', key: LS.gas_key || '' });
+let plan = null, checks = { shopping: {} }, tab = LS.tab || 'menu';
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){ $('toast').textContent = m; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'), 2200); }
+
+/* --- Google Apps Script API --- */
+async function gasGet(action) {
+  const r = await fetch(`${cfg().url}?key=${encodeURIComponent(cfg().key)}&action=${action}&t=${Date.now()}`);
+  if (!r.ok) throw 0;
+  const j = await r.json();
+  if (j.error) throw j.error;
+  return j;
+}
+async function gasPost(action, data) {
+  // Content-Type text/plain — чтобы не было CORS preflight (GAS его не умеет)
+  const r = await fetch(cfg().url, { method: 'POST', body: JSON.stringify({ key: cfg().key, action, data }) });
+  if (!r.ok) throw 0;
+  const j = await r.json();
+  if (j.error) throw j.error;
+  return j;
+}
+
+async function loadPlan() {
+  if (!cfg().url) { plan = null; return; }
+  try {
+    const p = await gasGet('plan');
+    if (p && p.days) { plan = p; LS.plan_cache = JSON.stringify(plan); }
+    else if (LS.plan_cache) plan = JSON.parse(LS.plan_cache);
+  } catch (e) {
+    if (LS.plan_cache) { plan = JSON.parse(LS.plan_cache); toast('Офлайн: показан сохранённый план'); }
+  }
+}
+async function loadChecks() {
+  if (LS.checks_local) checks = JSON.parse(LS.checks_local);
+  if (!cfg().url) return;
+  try {
+    const c = await gasGet('checks');
+    if (c && c.shopping) { checks = c; LS.checks_local = JSON.stringify(checks); }
+  } catch (e) { /* остаёмся на локальных */ }
+}
+let pushTimer = null;
+function schedulePush() {
+  LS.checks_local = JSON.stringify(checks);
+  if (!cfg().url) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushChecks, 1200);
+}
+async function pushChecks() {
+  try { await gasPost('checks', checks); }
+  catch (e) { toast('Не удалось синхронизировать — сохранено локально'); }
+}
+async function importPlan() {
+  let p;
+  try { p = JSON.parse($('s-plan').value); }
+  catch (e) { toast('Это не валидный JSON'); return; }
+  if (!p.days) { toast('В плане нет поля days'); return; }
+  try {
+    await gasPost('plan', p);
+    $('s-plan').value = '';
+    toast('План загружен');
+    await refresh(true);
+  } catch (e) { toast('Ошибка загрузки — проверь URL и ключ'); }
+}
+
+/* --- рендер --- */
+function setTab(t) { tab = t; LS.tab = t; render(); }
+function render() {
+  ['menu','shop','kbju'].forEach(t => $('tab-'+t).classList.toggle('on', t === tab));
+  if (!plan) {
+    $('title').textContent = 'Меню';
+    $('subtitle').textContent = '';
+    $('view').innerHTML = `<div class="empty">Нет данных.<br>Открой ⚙️ и вставь URL скрипта и секретный ключ<br>(инструкция в README), затем «Обновить данные».</div>`;
+    return;
+  }
+  $('subtitle').textContent = plan.title || '';
+  if (tab === 'menu') renderMenu();
+  else if (tab === 'shop') renderShop();
+  else renderKbju();
+}
+const fmtK = k => k ? `${k.kcal} ккал · Б${k.p} Ж${k.f} У${k.c}` : '';
+function renderMenu() {
+  $('title').textContent = 'Меню';
+  const today = new Date().toISOString().slice(0,10);
+  $('view').innerHTML = plan.days.map(d => `
+    <div class="day ${d.date === today ? 'today' : ''}">
+      <div class="day-head"><b>${esc(d.name)}</b><span>${d.date.slice(8,10)}.${d.date.slice(5,7)}</span></div>
+      ${d.meals.map(m => `
+        <div class="meal">
+          <div class="slot">${esc(m.slot)}</div>
+          <div>
+            <div class="name">${esc(m.name)}</div>
+            ${m.kbju ? `<div class="kbju">${fmtK(m.kbju)} / порция</div>` : ''}
+            ${m.cook ? `<span class="badge cook">👨‍🍳 Готовим ×4 порции</span>` : ''}
+            ${m.leftover ? `<span class="badge left">♻️ Доедаем вчерашнее</span>` : ''}
+            ${m.note ? `<div class="note">${esc(m.note)}</div>` : ''}
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+function renderShop() {
+  $('title').textContent = 'Покупки';
+  const all = plan.shopping.flatMap(c => c.items);
+  const done = all.filter(i => checks.shopping[i.n]).length;
+  $('view').innerHTML = `
+    <div class="progress">${done} из ${all.length} куплено
+      <div class="bar"><i style="width:${all.length ? done/all.length*100 : 0}%"></i></div>
+    </div>` +
+    plan.shopping.map(c => `
+      <div class="cat"><h3>${esc(c.cat)}</h3>
+        ${c.items.map(i => `
+          <div class="item ${checks.shopping[i.n] ? 'done' : ''}" onclick="toggleItem(this.dataset.n)" data-n="${esc(i.n)}">
+            <div class="box">✓</div><div class="n">${esc(i.n)}</div><div class="q">${esc(i.q || '')}</div>
+          </div>`).join('')}
+      </div>`).join('');
+}
+function toggleItem(n) {
+  checks.shopping[n] = !checks.shopping[n];
+  if (!checks.shopping[n]) delete checks.shopping[n];
+  schedulePush();
+  renderShop();
+}
+function renderKbju() {
+  $('title').textContent = 'КБЖУ';
+  const t = plan.targets || {};
+  const clr = p => p > 1.12 ? 'var(--red)' : p >= 0.9 ? 'var(--accent)' : 'var(--accent2)';
+  $('view').innerHTML = plan.days.map(d => {
+    const sum = { kcal:0, p:0, f:0, c:0 };
+    d.meals.forEach(m => { if (m.kbju) for (const k in sum) sum[k] += m.kbju[k] || 0; });
+    return `<div class="kday"><b>${esc(d.name)}</b>
+      ${Object.keys(t).map(name => {
+        const tg = t[name];
+        return `<div class="person"><div class="pname">${esc(name)}</div>
+          ${[['ккал','kcal'],['Б','p'],['Ж','f'],['У','c']].map(([lbl,k]) => {
+            const pct = tg[k] ? sum[k]/tg[k] : 0;
+            return `<div class="krow"><span class="lbl">${lbl}</span>
+              <span class="track"><i style="width:${Math.min(pct*100,100)}%;background:${clr(pct)}"></i></span>
+              <span class="val">${sum[k]} / ${tg[k]}</span></div>`;
+          }).join('')}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+/* --- настройки --- */
+function openSettings() {
+  $('s-url').value = cfg().url; $('s-key').value = cfg().key;
+  $('settings').classList.add('show');
+}
+$('settings').addEventListener('click', e => { if (e.target === $('settings')) $('settings').classList.remove('show'); });
+function saveSettings() {
+  LS.gas_url = $('s-url').value.trim();
+  LS.gas_key = $('s-key').value.trim();
+  $('settings').classList.remove('show');
+  refresh(true);
+}
+async function refresh(force) {
+  $('settings').classList.remove('show');
+  await Promise.all([loadPlan(), loadChecks()]);
+  render();
+  if (plan && force) toast('Данные обновлены');
+}
+
+/* --- старт --- */
+refresh(false);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(false); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
