@@ -163,6 +163,8 @@ nav button.on { color:var(--accent); }
     <div class="hint">Данные хранятся в Google Drive Ильи и видны только вам двоим. URL и ключ — из инструкции в README.</div>
     <button class="btn" onclick="saveSettings()">Сохранить</button>
     <button class="btn ghost" onclick="refresh(true)">Обновить данные</button>
+    <button class="btn ghost" onclick="shareSettings()">🔗 Поделиться настройками</button>
+    <div class="hint">Создаст ссылку с URL и ключом. Открой её на втором телефоне — приложение настроится само, вводить ничего не нужно. Ключ передаётся в части ссылки после «#» и не уходит на серверы — отправляй ссылку только тому, с кем делишь доступ (AirDrop / сообщение).</div>
     <label style="margin-top:20px">Импорт плана недели (JSON из чата Claude)</label>
     <textarea id="s-plan" rows="4" placeholder='{"title":"Неделя …","days":[…]}'></textarea>
     <button class="btn ghost" onclick="importPlan()">Загрузить план</button>
@@ -342,7 +344,53 @@ async function refresh(force) {
   if (plan && force) toast('Данные обновлены');
 }
 
+/* --- шаринг настроек ссылкой ---
+   Конфиг кладём во фрагмент URL (после #). Браузер не шлёт фрагмент на
+   сервер, поэтому ключ не попадает в логи хостинга и не уходит на сторонние
+   сервисы. Кодируем в url-safe base64 (чтобы ключ не читался с первого взгляда
+   и не ломался спецсимволами). */
+const b64e = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const b64d = s => decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/'))));
+
+function makeShareLink() {
+  const { url, key } = cfg();
+  const payload = b64e(JSON.stringify({ url, key }));
+  const base = location.origin + location.pathname;
+  return base + '#cfg=' + payload;
+}
+async function shareSettings() {
+  const { url, key } = cfg();
+  if (!url || !key) { toast('Сначала заполни URL и ключ'); return; }
+  const link = makeShareLink();
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Меню недели — настройки', url: link }); return; }
+    await navigator.clipboard.writeText(link);
+    toast('Ссылка скопирована');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // пользователь закрыл шторку
+    try { await navigator.clipboard.writeText(link); toast('Ссылка скопирована'); }
+    catch (_) { toast('Не удалось создать ссылку'); }
+  }
+}
+/* Применяем конфиг из ссылки при открытии и сразу чистим хэш из адресной строки. */
+function applyShareLink() {
+  const m = location.hash.match(/cfg=([^&]+)/);
+  if (!m) return false;
+  try {
+    const { url, key } = JSON.parse(b64d(m[1]));
+    if (url) LS.gas_url = url;
+    if (key) LS.gas_key = key;
+    history.replaceState(null, '', location.pathname + location.search);
+    toast('Настройки применены');
+    return true;
+  } catch (e) {
+    history.replaceState(null, '', location.pathname + location.search);
+    return false;
+  }
+}
+
 /* --- старт --- */
+applyShareLink();
 refresh(false);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(false); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
