@@ -1,5 +1,20 @@
-/apps-script
-.idea
-.claude
-.vscode
-.dev
+# --- редакторы и IDE ---
+.idea/
+.vscode/
+.claude/
+
+# --- приватные / dev-файлы (не для публичного репо) ---
+.dev/
+/apps-script/
+
+# --- реальные данные и секреты (в репо только *.example.json) ---
+plan.json
+checks.json
+*.local.json
+.env
+.env.*
+
+# --- OS-мусор ---
+.DS_Store
+Thumbs.db
+*.log
